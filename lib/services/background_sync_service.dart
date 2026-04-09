@@ -11,10 +11,14 @@ class BackgroundSyncService {
   const BackgroundSyncService._();
 
   static Future<void> initialize() async {
-    Workmanager().registerPeriodicTask(
+    await Workmanager().registerPeriodicTask(
       AppConstants.syncUsersTask,
       AppConstants.syncUsersTask,
       frequency: AppConstants.syncFrequency,
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+      ),
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
     );
   }
 }

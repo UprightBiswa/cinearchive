@@ -14,11 +14,13 @@ import '../widgets/bookmark_button.dart';
 class MovieDetailPage extends StatefulWidget {
   const MovieDetailPage({
     required this.user,
+    required this.movieId,
     this.initialMovie,
     super.key,
   });
 
   final AppUser user;
+  final int movieId;
   final Movie? initialMovie;
 
   @override
@@ -32,9 +34,7 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialMovie != null) {
-      _loadBookmarkStatus(widget.initialMovie!.id);
-    }
+    _loadBookmarkStatus(widget.movieId);
   }
 
   Future<void> _loadBookmarkStatus(int movieId) async {
@@ -66,8 +66,8 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
           if (state.errorMessage != null && movie == null) {
             return Center(
               child: FilledButton(
-                onPressed: () {},
-                child: const Text('Unable to load movie'),
+                onPressed: () => context.read<MovieDetailCubit>().load(widget.movieId),
+                child: const Text('Retry loading movie'),
               ),
             );
           }

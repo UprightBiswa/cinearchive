@@ -1,6 +1,6 @@
-import 'package:cinearchive/domain/entities/app_user.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../domain/entities/app_user.dart';
 import '../../../domain/repositories/user_repository.dart';
 import 'user_list_state.dart';
 
