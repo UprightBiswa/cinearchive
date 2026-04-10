@@ -2,11 +2,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/di/injection_container.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/entities/movie.dart';
-import '../../domain/entities/movie_bookmark.dart';
-import '../../domain/repositories/movie_repository.dart';
 import '../blocs/movie_list/movie_list_cubit.dart';
 import '../blocs/movie_list/movie_list_state.dart';
 import '../widgets/bookmark_button.dart';
@@ -26,42 +23,20 @@ class MovieListPage extends StatefulWidget {
 
 class _MovieListPageState extends State<MovieListPage> {
   final ScrollController _scrollController = ScrollController();
-  final MovieRepository _movieRepository = sl<MovieRepository>();
-  final Map<int, bool> _bookmarkState = <int, bool>{};
-  int _currentIndex = 0;
-  bool _isLoadingBookmarks = true;
-  List<MovieBookmark> _savedBookmarks = const <MovieBookmark>[];
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _loadBookmarks();
-  }
-
-  Future<void> _loadBookmarks() async {
-    final bookmarks = await _movieRepository.getBookmarksForUser(widget.user.localId);
-    if (!mounted) return;
-    setState(() {
-      _savedBookmarks = bookmarks;
-      _bookmarkState
-        ..clear()
-        ..addEntries(bookmarks.map((item) => MapEntry(item.movieId, true)));
-      _isLoadingBookmarks = false;
-    });
   }
 
   void _onScroll() {
-    if (_currentIndex != 0 || !_scrollController.hasClients) return;
+    final cubit = context.read<MovieListCubit>();
+    if (!_scrollController.hasClients || cubit.state.selectedTabIndex != 0) return;
     final threshold = _scrollController.position.maxScrollExtent * 0.82;
     if (_scrollController.position.pixels >= threshold) {
-      context.read<MovieListCubit>().fetchMore();
+      cubit.fetchMore();
     }
-  }
-
-  Future<void> _toggleBookmark(Movie movie) async {
-    await _movieRepository.toggleBookmark(user: widget.user, movie: movie);
-    await _loadBookmarks();
   }
 
   Future<void> _openMovieDetail(Movie movie) async {
@@ -73,7 +48,8 @@ class _MovieListPageState extends State<MovieListPage> {
         'user': widget.user,
       },
     );
-    await _loadBookmarks();
+    if (!mounted) return;
+    await context.read<MovieListCubit>().loadBookmarks();
   }
 
   Widget _buildHeader(bool isWide) {
@@ -151,8 +127,8 @@ class _MovieListPageState extends State<MovieListPage> {
                     movie: featuredMovie,
                     featured: true,
                     trailing: BookmarkButton(
-                      isBookmarked: _bookmarkState[featuredMovie.id] ?? false,
-                      onPressed: () => _toggleBookmark(featuredMovie),
+                      isBookmarked: state.bookmarkMap[featuredMovie.id] ?? false,
+                      onPressed: () => context.read<MovieListCubit>().toggleBookmark(featuredMovie),
                     ),
                     onTap: () => _openMovieDetail(featuredMovie),
                   ),
@@ -175,8 +151,8 @@ class _MovieListPageState extends State<MovieListPage> {
                     return MovieTile(
                       movie: movie,
                       trailing: BookmarkButton(
-                        isBookmarked: _bookmarkState[movie.id] ?? false,
-                        onPressed: () => _toggleBookmark(movie),
+                        isBookmarked: state.bookmarkMap[movie.id] ?? false,
+                        onPressed: () => context.read<MovieListCubit>().toggleBookmark(movie),
                       ),
                       onTap: () => _openMovieDetail(movie),
                     );
@@ -230,12 +206,12 @@ class _MovieListPageState extends State<MovieListPage> {
     );
   }
 
-  Widget _buildSavedTab() {
-    if (_isLoadingBookmarks) {
+  Widget _buildSavedTab(MovieListState state) {
+    if (state.isLoadingBookmarks) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_savedBookmarks.isEmpty) {
+    if (state.savedBookmarks.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -255,9 +231,9 @@ class _MovieListPageState extends State<MovieListPage> {
         crossAxisSpacing: 20,
         childAspectRatio: 0.62,
       ),
-      itemCount: _savedBookmarks.length,
+      itemCount: state.savedBookmarks.length,
       itemBuilder: (context, index) {
-        final bookmark = _savedBookmarks[index];
+        final bookmark = state.savedBookmarks[index];
         final movie = Movie(
           id: bookmark.movieId,
           title: bookmark.title,
@@ -270,7 +246,7 @@ class _MovieListPageState extends State<MovieListPage> {
           movie: movie,
           trailing: BookmarkButton(
             isBookmarked: true,
-            onPressed: () => _toggleBookmark(movie),
+            onPressed: () => context.read<MovieListCubit>().toggleBookmark(movie),
           ),
           onTap: () => _openMovieDetail(movie),
         );
@@ -311,7 +287,7 @@ class _MovieListPageState extends State<MovieListPage> {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: null,
               child: const Text(
                 'Movies',
                 style: TextStyle(
@@ -339,7 +315,7 @@ class _MovieListPageState extends State<MovieListPage> {
       ),
       body: BlocConsumer<MovieListCubit, MovieListState>(
         listener: (context, state) {
-          if (state.errorMessage != null && state.movies.isNotEmpty) {
+          if (state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.errorMessage!)),
             );
@@ -348,80 +324,139 @@ class _MovieListPageState extends State<MovieListPage> {
         builder: (context, state) {
           return AnimatedSwitcher(
             duration: const Duration(milliseconds: 220),
-            child: _currentIndex == 0 ? _buildTrendingTab(state) : _buildSavedTab(),
+            child: state.selectedTabIndex == 0 ? _buildTrendingTab(state) : _buildSavedTab(state),
           );
         },
       ),
       bottomNavigationBar: SafeArea(
         top: false,
-        child: Container(
-          margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
-            boxShadow: const <BoxShadow>[
-              BoxShadow(
-                color: Color(0x12000000),
-                blurRadius: 24,
-                offset: Offset(0, -4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(16),
-                  onTap: () => Navigator.of(context).pop(),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 10),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Icon(Icons.group_outlined, color: Color(0xFF727782)),
-                        SizedBox(height: 4),
-                        Text(
-                          'Users',
-                          style: TextStyle(
-                            color: Color(0xFF727782),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.9,
-                          ),
-                        ),
-                      ],
-                    ),
+        child: BlocBuilder<MovieListCubit, MovieListState>(
+          builder: (context, state) {
+            return Container(
+              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: const <BoxShadow>[
+                  BoxShadow(
+                    color: Color(0x12000000),
+                    blurRadius: 24,
+                    offset: Offset(0, -4),
                   ),
-                ),
+                ],
               ),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0x1402569B),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Icon(Icons.movie_rounded, color: Color(0xFF02569B)),
-                      SizedBox(height: 4),
-                      Text(
-                        'Movies',
-                        style: TextStyle(
-                          color: Color(0xFF02569B),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.9,
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => Navigator.of(context).pop(),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Icon(Icons.group_outlined, color: Color(0xFF727782)),
+                            SizedBox(height: 4),
+                            Text(
+                              'Users',
+                              style: TextStyle(
+                                color: Color(0xFF727782),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.9,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => context.read<MovieListCubit>().selectTab(0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: state.selectedTabIndex == 0
+                              ? const Color(0x1402569B)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Icon(
+                              Icons.movie_rounded,
+                              color: state.selectedTabIndex == 0
+                                  ? const Color(0xFF02569B)
+                                  : const Color(0xFF727782),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Movies',
+                              style: TextStyle(
+                                color: state.selectedTabIndex == 0
+                                    ? const Color(0xFF02569B)
+                                    : const Color(0xFF727782),
+                                fontSize: 10,
+                                fontWeight: state.selectedTabIndex == 0
+                                    ? FontWeight.w800
+                                    : FontWeight.w700,
+                                letterSpacing: 0.9,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => context.read<MovieListCubit>().selectTab(1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: state.selectedTabIndex == 1
+                              ? const Color(0x1402569B)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Icon(
+                              Icons.bookmark_rounded,
+                              color: state.selectedTabIndex == 1
+                                  ? const Color(0xFF02569B)
+                                  : const Color(0xFF727782),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Saved',
+                              style: TextStyle(
+                                color: state.selectedTabIndex == 1
+                                    ? const Color(0xFF02569B)
+                                    : const Color(0xFF727782),
+                                fontSize: 10,
+                                fontWeight: state.selectedTabIndex == 1
+                                    ? FontWeight.w800
+                                    : FontWeight.w700,
+                                letterSpacing: 0.9,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

@@ -1,4 +1,4 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+﻿import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/app_user.dart';
@@ -34,22 +34,32 @@ class AppRouter {
       ),
       GoRoute(
         path: '/movies',
-        builder: (context, state) => BlocProvider<MovieListCubit>(
-          create: (_) => sl<MovieListCubit>()..fetchInitial(),
-          child: MovieListPage(user: state.extra! as AppUser),
-        ),
+        builder: (context, state) {
+          final user = state.extra! as AppUser;
+          return BlocProvider<MovieListCubit>(
+            create: (_) => sl<MovieListCubit>()..initialize(user),
+            child: MovieListPage(user: user),
+          );
+        },
       ),
       GoRoute(
         path: '/movie-detail',
         builder: (context, state) {
           final payload = state.extra! as Map<String, dynamic>;
+          final user = payload['user'] as AppUser;
           final movieId = payload['movieId'] as int;
+          final initialMovie = payload['movie'] as Movie?;
           return BlocProvider<MovieDetailCubit>(
-            create: (_) => sl<MovieDetailCubit>()..load(movieId),
+            create: (_) => sl<MovieDetailCubit>()
+              ..initialize(
+                user: user,
+                movieId: movieId,
+                initialMovie: initialMovie,
+              ),
             child: MovieDetailPage(
-              user: payload['user'] as AppUser,
+              user: user,
               movieId: movieId,
-              initialMovie: payload['movie'] as Movie?,
+              initialMovie: initialMovie,
             ),
           );
         },

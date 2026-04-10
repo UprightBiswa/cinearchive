@@ -39,7 +39,8 @@ flutter run --dart-define=REQRES_API_KEY=your_reqres_key --dart-define=TMDB_API_
 
 ### ReqRes
 
-Use the key provided from the ReqRes dashboard/docs and pass it as `REQRES_API_KEY`.
+1. Visit the ReqRes dashboard/docs and generate or copy your API key.
+2. Pass it as `REQRES_API_KEY`.
 
 ### TMDB
 
@@ -52,7 +53,7 @@ Use the key provided from the ReqRes dashboard/docs and pass it as `REQRES_API_K
 ## Offline Strategy
 
 - Offline-created users are saved locally with a generated `localId`.
-- Bookmarks are linked to the user’s `localId`, so brand new offline users can immediately bookmark movies.
+- Bookmarks are linked to the user's `localId`, so brand new offline users can immediately bookmark movies.
 - When connectivity comes back, WorkManager triggers sync.
 - Users sync first, then bookmarks are reconciled with the new remote user ID.
 
@@ -69,4 +70,10 @@ The Dio interceptor intentionally fails 30% of GET requests once, retries with e
 ```bash
 flutter pub get
 flutter run --dart-define=REQRES_API_KEY=your_reqres_key --dart-define=TMDB_API_KEY=your_tmdb_key
+```
+
+## Build APK
+
+```bash
+flutter build apk --dart-define=REQRES_API_KEY=your_reqres_key --dart-define=TMDB_API_KEY=your_tmdb_key
 ```

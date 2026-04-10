@@ -3,15 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/di/injection_container.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/entities/movie.dart';
-import '../../domain/repositories/movie_repository.dart';
 import '../blocs/movie_detail/movie_detail_cubit.dart';
 import '../blocs/movie_detail/movie_detail_state.dart';
 import '../widgets/bookmark_button.dart';
 
-class MovieDetailPage extends StatefulWidget {
+class MovieDetailPage extends StatelessWidget {
   const MovieDetailPage({
     required this.user,
     required this.movieId,
@@ -24,40 +22,18 @@ class MovieDetailPage extends StatefulWidget {
   final Movie? initialMovie;
 
   @override
-  State<MovieDetailPage> createState() => _MovieDetailPageState();
-}
-
-class _MovieDetailPageState extends State<MovieDetailPage> {
-  final MovieRepository _movieRepository = sl<MovieRepository>();
-  bool _isBookmarked = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadBookmarkStatus(widget.movieId);
-  }
-
-  Future<void> _loadBookmarkStatus(int movieId) async {
-    final isBookmarked = await _movieRepository.isBookmarked(
-      userLocalId: widget.user.localId,
-      movieId: movieId,
-    );
-    if (!mounted) return;
-    setState(() => _isBookmarked = isBookmarked);
-  }
-
-  Future<void> _toggleBookmark(Movie movie) async {
-    await _movieRepository.toggleBookmark(user: widget.user, movie: movie);
-    if (!mounted) return;
-    setState(() => _isBookmarked = !_isBookmarked);
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocBuilder<MovieDetailCubit, MovieDetailState>(
+      body: BlocConsumer<MovieDetailCubit, MovieDetailState>(
+        listener: (context, state) {
+          if (state.errorMessage != null && state.movie != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.errorMessage!)),
+            );
+          }
+        },
         builder: (context, state) {
-          final movie = state.movie ?? widget.initialMovie;
+          final movie = state.movie ?? initialMovie;
 
           if (state.isLoading && movie == null) {
             return const Center(child: CircularProgressIndicator());
@@ -66,7 +42,11 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
           if (state.errorMessage != null && movie == null) {
             return Center(
               child: FilledButton(
-                onPressed: () => context.read<MovieDetailCubit>().load(widget.movieId),
+                onPressed: () => context.read<MovieDetailCubit>().initialize(
+                      user: user,
+                      movieId: movieId,
+                      initialMovie: initialMovie,
+                    ),
                 child: const Text('Retry loading movie'),
               ),
             );
@@ -109,7 +89,7 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                                 colors: <Color>[
-                                  Colors.black.withValues(alpha: 0.14),
+                                  Colors.black.withOpacity(0.14),
                                   Theme.of(context).scaffoldBackgroundColor,
                                 ],
                               ),
@@ -123,10 +103,7 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
                                 Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
                                     color: const Color(0x1A006B5C),
                                     borderRadius: BorderRadius.circular(999),
@@ -175,8 +152,8 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                       Padding(
                         padding: const EdgeInsets.only(right: 12),
                         child: BookmarkButton(
-                          isBookmarked: _isBookmarked,
-                          onPressed: () => _toggleBookmark(movie),
+                          isBookmarked: state.isBookmarked,
+                          onPressed: () => context.read<MovieDetailCubit>().toggleBookmark(movie),
                         ),
                       ),
                     ],
@@ -292,7 +269,7 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.88),
+                        color: Colors.white.withOpacity(0.88),
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: const <BoxShadow>[
                           BoxShadow(
@@ -308,18 +285,18 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                           children: <Widget>[
                             Expanded(
                               child: FilledButton.icon(
-                                onPressed: () => _toggleBookmark(movie),
+                                onPressed: () => context.read<MovieDetailCubit>().toggleBookmark(movie),
                                 icon: Icon(
-                                  _isBookmarked ? Icons.bookmark : Icons.bookmark_add_outlined,
+                                  state.isBookmarked ? Icons.bookmark : Icons.bookmark_add_outlined,
                                 ),
                                 label: Text(
-                                  _isBookmarked ? 'Bookmarked' : 'Bookmark Movie',
+                                  state.isBookmarked ? 'Bookmarked' : 'Bookmark Movie',
                                 ),
                               ),
                             ),
                             const SizedBox(width: 12),
                             IconButton.filledTonal(
-                              onPressed: () {},
+                              onPressed: null,
                               icon: const Icon(Icons.play_arrow_rounded),
                               style: IconButton.styleFrom(
                                 minimumSize: const Size(56, 56),
