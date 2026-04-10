@@ -53,7 +53,7 @@ class _MovieListPageState extends State<MovieListPage> {
 
   void _onScroll() {
     if (_currentIndex != 0 || !_scrollController.hasClients) return;
-    final threshold = _scrollController.position.maxScrollExtent * 0.8;
+    final threshold = _scrollController.position.maxScrollExtent * 0.82;
     if (_scrollController.position.pixels >= threshold) {
       context.read<MovieListCubit>().fetchMore();
     }
@@ -76,7 +76,49 @@ class _MovieListPageState extends State<MovieListPage> {
     await _loadBookmarks();
   }
 
+  Widget _buildHeader(bool isWide) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Text(
+            'Trending Movies',
+            style: TextStyle(
+              color: Color(0xFF003F74),
+              fontSize: 36,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: 80,
+            height: 5,
+            decoration: BoxDecoration(
+              color: const Color(0xFF006B5C),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(height: 14),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: isWide ? 640 : double.infinity),
+            child: const Text(
+              'Discover the most viewed and highly-rated cinematic masterpieces curated by our global community of film architects.',
+              style: TextStyle(
+                color: Color(0xFF424751),
+                height: 1.45,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTrendingTab(MovieListState state) {
+    final width = MediaQuery.of(context).size.width;
+    final crossAxisCount = width >= 1100 ? 4 : width >= 700 ? 2 : 1;
+
     if (state.isInitialLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -90,75 +132,100 @@ class _MovieListPageState extends State<MovieListPage> {
       );
     }
 
+    final featuredMovie = state.movies.isNotEmpty ? state.movies.first : null;
+    final gridMovies = state.movies.length > 1 ? state.movies.sublist(1) : <Movie>[];
+
     return RefreshIndicator(
       onRefresh: () => context.read<MovieListCubit>().fetchInitial(),
-      child: ListView.builder(
+      child: CustomScrollView(
         controller: _scrollController,
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-        itemCount: state.movies.length + 2 + (state.isLoadingMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  const Text(
-                    'Trending Movies',
-                    style: TextStyle(
-                      color: Color(0xFF003F74),
-                      fontSize: 34,
-                      fontWeight: FontWeight.w900,
+        slivers: <Widget>[
+          SliverToBoxAdapter(child: _buildHeader(width >= 900)),
+          if (featuredMovie != null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+                child: SizedBox(
+                  height: width >= 900 ? 520 : 420,
+                  child: MovieTile(
+                    movie: featuredMovie,
+                    featured: true,
+                    trailing: BookmarkButton(
+                      isBookmarked: _bookmarkState[featuredMovie.id] ?? false,
+                      onPressed: () => _toggleBookmark(featuredMovie),
                     ),
+                    onTap: () => _openMovieDetail(featuredMovie),
                   ),
-                  const SizedBox(height: 10),
-                  Container(
-                    width: 80,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF006B5C),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
+                ),
+              ),
+            ),
+          if (gridMovies.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: 20,
+                  crossAxisSpacing: 20,
+                  childAspectRatio: 0.62,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final movie = gridMovies[index];
+                    return MovieTile(
+                      movie: movie,
+                      trailing: BookmarkButton(
+                        isBookmarked: _bookmarkState[movie.id] ?? false,
+                        onPressed: () => _toggleBookmark(movie),
+                      ),
+                      onTap: () => _openMovieDetail(movie),
+                    );
+                  },
+                  childCount: gridMovies.length,
+                ),
+              ),
+            ),
+          if (state.isLoadingMore)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 140),
+              child: Column(
+                children: <Widget>[
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: const <Widget>[
+                      _PageChip(label: '<', active: false),
+                      _PageChip(label: '1', active: true),
+                      _PageChip(label: '2', active: false),
+                      _PageChip(label: '3', active: false),
+                      _PageChip(label: '...', active: false),
+                      _PageChip(label: '12', active: false),
+                      _PageChip(label: '>', active: false),
+                    ],
                   ),
                   const SizedBox(height: 14),
-                  const Text(
-                    'Discover the most viewed and highly-rated cinematic picks curated for CineArchive members.',
-                    style: TextStyle(
-                      color: Color(0xFF424751),
-                      height: 1.45,
+                  Text(
+                    'Viewing page ${state.page}${state.hasMore ? ' and more available' : ''}',
+                    style: const TextStyle(
+                      color: Color(0xFF727782),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.1,
                     ),
                   ),
                 ],
               ),
-            );
-          }
-
-          if (index == 1) {
-            return const SizedBox.shrink();
-          }
-
-          final contentIndex = index - 2;
-          if (contentIndex >= state.movies.length) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: CircularProgressIndicator()),
-            );
-          }
-
-          final movie = state.movies[contentIndex];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: MovieTile(
-              movie: movie,
-              featured: contentIndex == 0,
-              trailing: BookmarkButton(
-                isBookmarked: _bookmarkState[movie.id] ?? false,
-                onPressed: () => _toggleBookmark(movie),
-              ),
-              onTap: () => _openMovieDetail(movie),
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
@@ -180,34 +247,34 @@ class _MovieListPageState extends State<MovieListPage> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadBookmarks,
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-        itemCount: _savedBookmarks.length,
-        itemBuilder: (context, index) {
-          final bookmark = _savedBookmarks[index];
-          final movie = Movie(
-            id: bookmark.movieId,
-            title: bookmark.title,
-            posterPath: bookmark.posterPath,
-            overview: '',
-            releaseDate: bookmark.releaseDate,
-          );
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: MovieTile(
-              movie: movie,
-              trailing: BookmarkButton(
-                isBookmarked: true,
-                onPressed: () => _toggleBookmark(movie),
-              ),
-              onTap: () => _openMovieDetail(movie),
-            ),
-          );
-        },
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 260,
+        mainAxisSpacing: 20,
+        crossAxisSpacing: 20,
+        childAspectRatio: 0.62,
       ),
+      itemCount: _savedBookmarks.length,
+      itemBuilder: (context, index) {
+        final bookmark = _savedBookmarks[index];
+        final movie = Movie(
+          id: bookmark.movieId,
+          title: bookmark.title,
+          posterPath: bookmark.posterPath,
+          overview: '',
+          releaseDate: bookmark.releaseDate,
+        );
+
+        return MovieTile(
+          movie: movie,
+          trailing: BookmarkButton(
+            isBookmarked: true,
+            onPressed: () => _toggleBookmark(movie),
+          ),
+          onTap: () => _openMovieDetail(movie),
+        );
+      },
     );
   }
 
@@ -221,9 +288,54 @@ class _MovieListPageState extends State<MovieListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.of(context).size.width >= 768;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.user.fullName.isEmpty ? 'CineArchive' : widget.user.fullName),
+        leading: IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.menu_rounded),
+          color: const Color(0xFF02569B),
+        ),
+        title: const Text('CineArchive'),
+        actions: <Widget>[
+          if (isWide) ...<Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Users',
+                style: TextStyle(
+                  color: Color(0xFF727782),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {},
+              child: const Text(
+                'Movies',
+                style: TextStyle(
+                  color: Color(0xFF02569B),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: CircleAvatar(
+              backgroundColor: const Color(0xFF02569B),
+              child: Text(
+                widget.user.fullName.isNotEmpty ? widget.user.fullName[0].toUpperCase() : 'U',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: BlocConsumer<MovieListCubit, MovieListState>(
         listener: (context, state) {
@@ -240,26 +352,104 @@ class _MovieListPageState extends State<MovieListPage> {
           );
         },
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() => _currentIndex = index);
-          if (index == 1) {
-            _loadBookmarks();
-          }
-        },
-        destinations: const <Widget>[
-          NavigationDestination(
-            icon: Icon(Icons.local_movies_outlined),
-            selectedIcon: Icon(Icons.local_movies),
-            label: 'Trending',
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color(0x12000000),
+                blurRadius: 24,
+                offset: Offset(0, -4),
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.bookmark_border),
-            selectedIcon: Icon(Icons.bookmark),
-            label: 'Saved',
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => Navigator.of(context).pop(),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(Icons.group_outlined, color: Color(0xFF727782)),
+                        SizedBox(height: 4),
+                        Text(
+                          'Users',
+                          style: TextStyle(
+                            color: Color(0xFF727782),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.9,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0x1402569B),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(Icons.movie_rounded, color: Color(0xFF02569B)),
+                      SizedBox(height: 4),
+                      Text(
+                        'Movies',
+                        style: TextStyle(
+                          color: Color(0xFF02569B),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.9,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PageChip extends StatelessWidget {
+  const _PageChip({required this.label, required this.active});
+
+  final String label;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: active ? const Color(0xFF02569B) : const Color(0xFFEDEEEF),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: active ? Colors.white : const Color(0xFF424751),
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }

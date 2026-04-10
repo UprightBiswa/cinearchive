@@ -15,7 +15,7 @@ class BookmarkButton extends StatelessWidget {
     return IconButton.filled(
       onPressed: onPressed,
       style: IconButton.styleFrom(
-        backgroundColor: isBookmarked ? const Color(0xFF003F74) : Colors.white.withValues(alpha: 0.82),
+        backgroundColor: isBookmarked ? const Color(0xFF003F74) : Colors.white.withOpacity(0.82),
         foregroundColor: isBookmarked ? Colors.white : const Color(0xFF003F74),
       ),
       icon: Icon(isBookmarked ? Icons.bookmark : Icons.bookmark_border),
