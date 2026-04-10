@@ -9,9 +9,19 @@ class MovieRemoteDataSource {
 
   final Dio _dio;
 
+  void _ensureTmdbKey() {
+    if (!AppEnv.hasTmdbKey) {
+      throw StateError(
+        'Missing TMDB_API_KEY. Run with --dart-define=TMDB_API_KEY=your_key',
+      );
+    }
+  }
+
   Future<PaginatedResponse<MovieModel>> fetchTrendingMovies({
     required int page,
   }) async {
+    _ensureTmdbKey();
+
     final response = await _dio.get<dynamic>(
       '/trending/movie/day',
       queryParameters: <String, dynamic>{
@@ -36,6 +46,8 @@ class MovieRemoteDataSource {
   }
 
   Future<MovieModel> fetchMovieDetail(int movieId) async {
+    _ensureTmdbKey();
+
     final response = await _dio.get<dynamic>(
       '/movie/$movieId',
       queryParameters: <String, dynamic>{'api_key': AppEnv.tmdbApiKey},

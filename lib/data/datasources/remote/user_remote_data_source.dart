@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/config/app_env.dart';
 import '../../../core/utils/paginated_response.dart';
 import '../../models/app_user_model.dart';
 
@@ -8,7 +9,17 @@ class UserRemoteDataSource {
 
   final Dio _dio;
 
+  void _ensureReqResKey() {
+    if (!AppEnv.hasReqResKey) {
+      throw StateError(
+        'Missing REQRES_API_KEY. Run with --dart-define=REQRES_API_KEY=your_key',
+      );
+    }
+  }
+
   Future<PaginatedResponse<AppUserModel>> fetchUsers({required int page}) async {
+    _ensureReqResKey();
+
     final response = await _dio.get<dynamic>(
       '/users',
       queryParameters: <String, dynamic>{'page': page},
@@ -34,6 +45,8 @@ class UserRemoteDataSource {
     required String name,
     required String job,
   }) async {
+    _ensureReqResKey();
+
     final response = await _dio.post<dynamic>(
       '/users',
       data: <String, dynamic>{'name': name, 'job': job},
