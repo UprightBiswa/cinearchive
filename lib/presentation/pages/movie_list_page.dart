@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -94,24 +94,69 @@ class _MovieListPageState extends State<MovieListPage> {
       onRefresh: () => context.read<MovieListCubit>().fetchInitial(),
       child: ListView.builder(
         controller: _scrollController,
-        padding: const EdgeInsets.all(16),
-        itemCount: state.movies.length + (state.isLoadingMore ? 1 : 0),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+        itemCount: state.movies.length + 2 + (state.isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
-          if (index >= state.movies.length) {
+          if (index == 0) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Text(
+                    'Trending Movies',
+                    style: TextStyle(
+                      color: Color(0xFF003F74),
+                      fontSize: 34,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: 80,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF006B5C),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Discover the most viewed and highly-rated cinematic picks curated for CineArchive members.',
+                    style: TextStyle(
+                      color: Color(0xFF424751),
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (index == 1) {
+            return const SizedBox.shrink();
+          }
+
+          final contentIndex = index - 2;
+          if (contentIndex >= state.movies.length) {
             return const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(child: CircularProgressIndicator()),
             );
           }
 
-          final movie = state.movies[index];
-          return MovieTile(
-            movie: movie,
-            trailing: BookmarkButton(
-              isBookmarked: _bookmarkState[movie.id] ?? false,
-              onPressed: () => _toggleBookmark(movie),
+          final movie = state.movies[contentIndex];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: MovieTile(
+              movie: movie,
+              featured: contentIndex == 0,
+              trailing: BookmarkButton(
+                isBookmarked: _bookmarkState[movie.id] ?? false,
+                onPressed: () => _toggleBookmark(movie),
+              ),
+              onTap: () => _openMovieDetail(movie),
             ),
-            onTap: () => _openMovieDetail(movie),
           );
         },
       ),
@@ -138,7 +183,7 @@ class _MovieListPageState extends State<MovieListPage> {
     return RefreshIndicator(
       onRefresh: _loadBookmarks,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
         itemCount: _savedBookmarks.length,
         itemBuilder: (context, index) {
           final bookmark = _savedBookmarks[index];
@@ -150,13 +195,16 @@ class _MovieListPageState extends State<MovieListPage> {
             releaseDate: bookmark.releaseDate,
           );
 
-          return MovieTile(
-            movie: movie,
-            trailing: BookmarkButton(
-              isBookmarked: true,
-              onPressed: () => _toggleBookmark(movie),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: MovieTile(
+              movie: movie,
+              trailing: BookmarkButton(
+                isBookmarked: true,
+                onPressed: () => _toggleBookmark(movie),
+              ),
+              onTap: () => _openMovieDetail(movie),
             ),
-            onTap: () => _openMovieDetail(movie),
           );
         },
       ),
@@ -175,7 +223,7 @@ class _MovieListPageState extends State<MovieListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.user.fullName.isEmpty ? 'Movies' : widget.user.fullName),
+        title: Text(widget.user.fullName.isEmpty ? 'CineArchive' : widget.user.fullName),
       ),
       body: BlocConsumer<MovieListCubit, MovieListState>(
         listener: (context, state) {

@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+﻿import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -80,43 +80,255 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
               ? null
               : '${AppConstants.tmdbImageBaseUrl}${movie.posterPath}';
 
-          return CustomScrollView(
-            slivers: <Widget>[
-              SliverAppBar(
-                pinned: true,
-                expandedHeight: 320,
-                flexibleSpace: FlexibleSpaceBar(
-                  background: posterUrl == null
-                      ? Container(color: Colors.grey.shade300)
-                      : CachedNetworkImage(imageUrl: posterUrl, fit: BoxFit.cover),
-                ),
-                actions: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: BookmarkButton(
-                      isBookmarked: _isBookmarked,
-                      onPressed: () => _toggleBookmark(movie),
+          return Stack(
+            children: <Widget>[
+              CustomScrollView(
+                slivers: <Widget>[
+                  SliverAppBar(
+                    pinned: true,
+                    expandedHeight: 420,
+                    leading: IconButton.filledTonal(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.arrow_back),
+                    ),
+                    title: Text(
+                      movie.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: Stack(
+                        fit: StackFit.expand,
+                        children: <Widget>[
+                          posterUrl == null
+                              ? Container(color: Colors.grey.shade300)
+                              : CachedNetworkImage(imageUrl: posterUrl, fit: BoxFit.cover),
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: <Color>[
+                                  Colors.black.withValues(alpha: 0.14),
+                                  Theme.of(context).scaffoldBackgroundColor,
+                                ],
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            left: 24,
+                            right: 24,
+                            bottom: 40,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0x1A006B5C),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: const Text(
+                                    'Sci-Fi / Action',
+                                    style: TextStyle(
+                                      color: Color(0xFF006B5C),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.1,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                Text(
+                                  movie.title,
+                                  style: const TextStyle(
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.w900,
+                                    height: 0.95,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: <Widget>[
+                                    const Icon(Icons.star, color: Colors.amber),
+                                    const SizedBox(width: 6),
+                                    const Text(
+                                      'Trending',
+                                      style: TextStyle(fontWeight: FontWeight.w800),
+                                    ),
+                                    const SizedBox(width: 18),
+                                    const Icon(Icons.calendar_today_outlined, size: 18),
+                                    const SizedBox(width: 6),
+                                    Text(movie.releaseDate ?? 'Unknown'),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    actions: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: BookmarkButton(
+                          isBookmarked: _isBookmarked,
+                          onPressed: () => _toggleBookmark(movie),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 140),
+                      child: Column(
+                        children: <Widget>[
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  const Text(
+                                    'Description',
+                                    style: TextStyle(
+                                      color: Color(0xFF003F74),
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  Text(
+                                    movie.overview.isEmpty
+                                        ? 'No description available for this movie.'
+                                        : movie.overview,
+                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                          color: const Color(0xFF424751),
+                                          height: 1.5,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: Card(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        const Text(
+                                          'Release',
+                                          style: TextStyle(
+                                            color: Color(0xFF006B5C),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 1.2,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          movie.releaseDate ?? 'Unknown',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Card(
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(20),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        Text(
+                                          'Status',
+                                          style: TextStyle(
+                                            color: Color(0xFF006B5C),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 1.2,
+                                          ),
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Archived Classic',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(movie.title, style: Theme.of(context).textTheme.headlineMedium),
-                      const SizedBox(height: 12),
-                      Text(movie.releaseDate ?? 'Unknown release date'),
-                      const SizedBox(height: 24),
-                      Text(
-                        movie.overview.isEmpty
-                            ? 'No description available for this movie.'
-                            : movie.overview,
-                        style: Theme.of(context).textTheme.bodyLarge,
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.88),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: const <BoxShadow>[
+                          BoxShadow(
+                            color: Color(0x14000000),
+                            blurRadius: 24,
+                            offset: Offset(0, 12),
+                          ),
+                        ],
                       ),
-                    ],
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: FilledButton.icon(
+                                onPressed: () => _toggleBookmark(movie),
+                                icon: Icon(
+                                  _isBookmarked ? Icons.bookmark : Icons.bookmark_add_outlined,
+                                ),
+                                label: Text(
+                                  _isBookmarked ? 'Bookmarked' : 'Bookmark Movie',
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            IconButton.filledTonal(
+                              onPressed: () {},
+                              icon: const Icon(Icons.play_arrow_rounded),
+                              style: IconButton.styleFrom(
+                                minimumSize: const Size(56, 56),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),

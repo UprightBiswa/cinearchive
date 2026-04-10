@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -15,6 +15,13 @@ class UserListPage extends StatefulWidget {
 
 class _UserListPageState extends State<UserListPage> {
   final ScrollController _scrollController = ScrollController();
+  static const List<String> _roleLabels = <String>[
+    'Premium Member',
+    'Administrator',
+    'Curator',
+    'Viewer',
+    'Executive',
+  ];
 
   @override
   void initState() {
@@ -41,7 +48,24 @@ class _UserListPageState extends State<UserListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Users')),
+      appBar: AppBar(
+        title: const Text('CineArchive'),
+        actions: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: CircleAvatar(
+              backgroundColor: const Color(0xFF02569B),
+              child: Text(
+                'CA',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+            ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await context.push('/add-user');
@@ -75,24 +99,105 @@ class _UserListPageState extends State<UserListPage> {
 
           return RefreshIndicator(
             onRefresh: () => context.read<UserListCubit>().fetchInitial(),
-            child: ListView.builder(
+            child: CustomScrollView(
               controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: state.users.length + (state.isLoadingMore ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index >= state.users.length) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                final user = state.users[index];
-                return UserTile(
-                  user: user,
-                  onTap: () => context.push('/movies', extra: user),
-                );
-              },
+              slivers: <Widget>[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xCC006B5C),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Icon(Icons.sync, color: Colors.white, size: 16),
+                                SizedBox(width: 8),
+                                Text(
+                                  'RECONNECTING...',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                        const Text(
+                          'Directory',
+                          style: TextStyle(
+                            color: Color(0xFF006B5C),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 2.4,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'CineArchive Users',
+                          style: TextStyle(
+                            color: Color(0xFF003F74),
+                            fontSize: 38,
+                            fontWeight: FontWeight.w900,
+                            height: 0.95,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          width: 92,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF02569B),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  sliver: SliverGrid(
+                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 360,
+                      mainAxisSpacing: 18,
+                      crossAxisSpacing: 18,
+                      childAspectRatio: 1.16,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final user = state.users[index];
+                        return UserTile(
+                          user: user,
+                          badgeLabel: _roleLabels[index % _roleLabels.length],
+                          onTap: () => context.push('/movies', extra: user),
+                        );
+                      },
+                      childCount: state.users.length,
+                    ),
+                  ),
+                ),
+                if (state.isLoadingMore)
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              ],
             ),
           );
         },
