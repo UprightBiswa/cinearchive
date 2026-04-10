@@ -47,7 +47,7 @@ class AppRouter {
         builder: (context, state) {
           final payload = state.extra! as Map<String, dynamic>;
           final user = payload['user'] as AppUser;
-          final movieId = payload['movieId'] as int;
+          final movieId = payload['movieId'] as String;
           final initialMovie = payload['movie'] as Movie?;
           return BlocProvider<MovieDetailCubit>(
             create: (_) => sl<MovieDetailCubit>()

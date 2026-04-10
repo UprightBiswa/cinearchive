@@ -6,13 +6,13 @@ import '../entities/movie_bookmark.dart';
 abstract class MovieRepository {
   Future<PaginatedResponse<Movie>> fetchMovies({required int page});
 
-  Future<Movie> fetchMovieDetail(int movieId);
+  Future<Movie> fetchMovieDetail(String movieId);
 
   Future<List<MovieBookmark>> getBookmarksForUser(String userLocalId);
 
   Future<bool> isBookmarked({
     required String userLocalId,
-    required int movieId,
+    required String movieId,
   });
 
   Future<void> toggleBookmark({

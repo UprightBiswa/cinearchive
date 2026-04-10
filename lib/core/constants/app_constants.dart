@@ -3,8 +3,8 @@ class AppConstants {
 
   static const String appName = 'CineArchive';
   static const String reqResBaseUrl = 'https://reqres.in/api';
-  static const String tmdbBaseUrl = 'https://api.themoviedb.org/3';
-  static const String tmdbImageBaseUrl = 'http://image.tmdb.org/t/p/w185';
+  static const String omdbBaseUrl = 'https://www.omdbapi.com';
+  static const String omdbSearchQuery = 'movie';
 
   static const String pendingUsersBox = 'pending_users_box';
   static const String bookmarksBox = 'bookmarks_box';

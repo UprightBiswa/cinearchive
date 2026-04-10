@@ -13,7 +13,7 @@ class MovieDetailCubit extends Cubit<MovieDetailState> {
 
   Future<void> initialize({
     required AppUser user,
-    required int movieId,
+    required String movieId,
     Movie? initialMovie,
   }) async {
     _user = user;
@@ -26,7 +26,7 @@ class MovieDetailCubit extends Cubit<MovieDetailState> {
     ]);
   }
 
-  Future<void> load(int movieId) async {
+  Future<void> load(String movieId) async {
     emit(state.copyWith(isLoading: true, clearError: true));
 
     try {
@@ -48,7 +48,7 @@ class MovieDetailCubit extends Cubit<MovieDetailState> {
     }
   }
 
-  Future<void> loadBookmarkStatus(int movieId) async {
+  Future<void> loadBookmarkStatus(String movieId) async {
     final user = _user;
     if (user == null) return;
 

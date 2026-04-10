@@ -40,7 +40,7 @@ Future<void> initializeDependencies() async {
       () => UserRemoteDataSource(sl<ApiClientFactory>().createReqResClient()),
     )
     ..registerLazySingleton<MovieRemoteDataSource>(
-      () => MovieRemoteDataSource(sl<ApiClientFactory>().createTmdbClient()),
+      () => MovieRemoteDataSource(sl<ApiClientFactory>().createOmdbClient()),
     )
     ..registerLazySingleton<UserRepository>(
       () => UserRepositoryImpl(

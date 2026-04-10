@@ -23,8 +23,8 @@ class ApiClientFactory {
     return dio;
   }
 
-  Dio createTmdbClient() {
-    final dio = Dio(BaseOptions(baseUrl: AppConstants.tmdbBaseUrl));
+  Dio createOmdbClient() {
+    final dio = Dio(BaseOptions(baseUrl: AppConstants.omdbBaseUrl));
     dio.interceptors.add(ResilientInterceptor(dio, _retrySignalService));
     return dio;
   }

@@ -1,7 +1,6 @@
 ﻿import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_constants.dart';
 import '../../domain/entities/movie.dart';
 
 class MovieTile extends StatelessWidget {
@@ -20,9 +19,7 @@ class MovieTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final posterUrl = movie.posterPath == null
-        ? null
-        : '${AppConstants.tmdbImageBaseUrl}${movie.posterPath}';
+    final posterUrl = movie.posterPath;
 
     return Card(
       child: InkWell(

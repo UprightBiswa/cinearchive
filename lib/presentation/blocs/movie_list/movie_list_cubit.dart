@@ -79,7 +79,7 @@ class MovieListCubit extends Cubit<MovieListState> {
 
     try {
       final bookmarks = await _movieRepository.getBookmarksForUser(user.localId);
-      final map = <int, bool>{
+      final map = <String, bool>{
         for (final MovieBookmark item in bookmarks) item.movieId: true,
       };
       emit(

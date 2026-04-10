@@ -27,7 +27,7 @@ class MovieRepositoryImpl implements MovieRepository {
   }
 
   @override
-  Future<Movie> fetchMovieDetail(int movieId) {
+  Future<Movie> fetchMovieDetail(String movieId) {
     return _remoteDataSource.fetchMovieDetail(movieId);
   }
 
@@ -40,7 +40,7 @@ class MovieRepositoryImpl implements MovieRepository {
   @override
   Future<bool> isBookmarked({
     required String userLocalId,
-    required int movieId,
+    required String movieId,
   }) async {
     final bookmarks = await _localBookmarkDataSource.getBookmarks();
     return bookmarks.any(

@@ -7,7 +7,7 @@ class MovieListState extends Equatable {
   const MovieListState({
     this.movies = const <Movie>[],
     this.savedBookmarks = const <MovieBookmark>[],
-    this.bookmarkMap = const <int, bool>{},
+    this.bookmarkMap = const <String, bool>{},
     this.selectedTabIndex = 0,
     this.page = 1,
     this.hasMore = true,
@@ -19,7 +19,7 @@ class MovieListState extends Equatable {
 
   final List<Movie> movies;
   final List<MovieBookmark> savedBookmarks;
-  final Map<int, bool> bookmarkMap;
+  final Map<String, bool> bookmarkMap;
   final int selectedTabIndex;
   final int page;
   final bool hasMore;
@@ -31,7 +31,7 @@ class MovieListState extends Equatable {
   MovieListState copyWith({
     List<Movie>? movies,
     List<MovieBookmark>? savedBookmarks,
-    Map<int, bool>? bookmarkMap,
+    Map<String, bool>? bookmarkMap,
     int? selectedTabIndex,
     int? page,
     bool? hasMore,

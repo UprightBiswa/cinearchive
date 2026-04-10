@@ -19,7 +19,7 @@ class MovieBookmarkModel extends MovieBookmark {
       id: json['id'] as String,
       userLocalId: json['userLocalId'] as String,
       userRemoteId: json['userRemoteId'] as String?,
-      movieId: json['movieId'] as int,
+      movieId: json['movieId'] as String,
       title: json['title'] as String,
       posterPath: json['posterPath'] as String?,
       releaseDate: json['releaseDate'] as String?,

@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../core/constants/app_constants.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/entities/movie.dart';
 import '../blocs/movie_detail/movie_detail_cubit.dart';
@@ -18,7 +17,7 @@ class MovieDetailPage extends StatelessWidget {
   });
 
   final AppUser user;
-  final int movieId;
+  final String movieId;
   final Movie? initialMovie;
 
   @override
@@ -56,9 +55,7 @@ class MovieDetailPage extends StatelessWidget {
             return const SizedBox.shrink();
           }
 
-          final posterUrl = movie.posterPath == null
-              ? null
-              : '${AppConstants.tmdbImageBaseUrl}${movie.posterPath}';
+          final posterUrl = movie.posterPath;
 
           return Stack(
             children: <Widget>[

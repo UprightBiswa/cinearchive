@@ -12,7 +12,7 @@ class UserRemoteDataSource {
   void _ensureReqResKey() {
     if (!AppEnv.hasReqResKey) {
       throw StateError(
-        'Missing REQRES_API_KEY. Run with --dart-define=REQRES_API_KEY=your_key',
+        'Missing ReqRes API key in AppEnv.reqResApiKey.',
       );
     }
   }

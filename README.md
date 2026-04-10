@@ -1,6 +1,6 @@
 # CineArchive
 
-CineArchive is a Flutter assignment starter that demonstrates paginated users, offline-first user creation, trending movies, movie details, offline bookmarking per user, silent retry handling, and background syncing.
+CineArchive is a Flutter assignment app with paginated users, offline-first user creation, movie browsing with OMDB, per-user offline bookmarks, retry handling, and background sync.
 
 ## Architecture
 
@@ -22,58 +22,58 @@ lib/
 - Connectivity detection: `connectivity_plus`
 - Image caching: `cached_network_image`
 
-## UI Flow
-
-1. `UserListPage`
-2. `AddUserPage`
-3. `MovieListPage`
-4. `MovieDetailPage`
-
-## API Keys
-
-Run the app with `dart-define` values:
-
-```bash
-flutter run --dart-define=REQRES_API_KEY=your_reqres_key --dart-define=TMDB_API_KEY=your_tmdb_key
-```
+## API Setup
 
 ### ReqRes
 
-1. Visit the ReqRes dashboard/docs and generate or copy your API key.
-2. Pass it as `REQRES_API_KEY`.
+The ReqRes key is currently hardcoded in [app_env.dart](d:/cineArchive/cinearchive/lib/core/config/app_env.dart) because this project is being prepared for assignment submission and you explicitly requested direct setup.
 
-### TMDB
+### OMDB
 
-1. Visit `https://www.themoviedb.org/`
-2. Sign in
-3. Open `Settings -> API`
-4. Request a key
-5. Pass it as `TMDB_API_KEY`
+This project now uses OMDB instead of TMDB.
+
+1. Open `https://www.omdbapi.com/apikey.aspx`
+2. Select the free plan
+3. Enter your email, first name, last name, and a short app description
+4. Submit the form
+5. Check your email and activate the key if OMDB sends a confirmation link
+6. Run the app with:
+
+```bash
+flutter run --dart-define=OMDB_API_KEY=your_omdb_key
+```
+
+You can also keep the key in a local `env.json` file:
+
+```json
+{
+  "OMDB_API_KEY": "your_omdb_key"
+}
+```
+
+Run with:
+
+```bash
+flutter run --dart-define-from-file=env.json
+```
 
 ## Offline Strategy
 
-- Offline-created users are saved locally with a generated `localId`.
-- Bookmarks are linked to the user's `localId`, so brand new offline users can immediately bookmark movies.
-- When connectivity comes back, WorkManager triggers sync.
-- Users sync first, then bookmarks are reconciled with the new remote user ID.
+- Offline-created users are saved locally with a generated `localId`
+- Bookmarks are linked to the user's `localId`
+- A brand new offline user can open the movie flow and bookmark movies immediately
+- When connectivity returns, WorkManager syncs pending users and keeps bookmark relationships intact
 
 ## Assumption
 
-The assignment does not provide a bookmark sync API. This starter therefore treats bookmark sync as local relationship reconciliation after user sync. In a production app, that last step would POST bookmarks to your own backend.
+The assignment does not provide a bookmark sync API. This project therefore keeps bookmark persistence locally and reconciles user relationships after user sync.
 
 ## Network Resilience
 
-The Dio interceptor intentionally fails 30% of GET requests once, retries with exponential backoff, and the UI shows a subtle `Reconnecting...` banner while retries happen in the background.
-
-## Setup
-
-```bash
-flutter pub get
-flutter run --dart-define=REQRES_API_KEY=your_reqres_key --dart-define=TMDB_API_KEY=your_tmdb_key
-```
+The Dio interceptor intentionally fails 30% of GET requests once, retries with exponential backoff, and the UI shows a subtle reconnecting banner while retries happen in the background.
 
 ## Build APK
 
 ```bash
-flutter build apk --dart-define=REQRES_API_KEY=your_reqres_key --dart-define=TMDB_API_KEY=your_tmdb_key
+flutter build apk --dart-define=OMDB_API_KEY=your_omdb_key
 ```

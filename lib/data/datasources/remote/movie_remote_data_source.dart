@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../core/config/app_env.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/paginated_response.dart';
 import '../../models/movie_model.dart';
 
@@ -9,10 +10,10 @@ class MovieRemoteDataSource {
 
   final Dio _dio;
 
-  void _ensureTmdbKey() {
-    if (!AppEnv.hasTmdbKey) {
+  void _ensureOmdbKey() {
+    if (!AppEnv.hasOmdbKey) {
       throw StateError(
-        'Missing TMDB_API_KEY. Run with --dart-define=TMDB_API_KEY=your_key',
+        'Missing OMDB_API_KEY. Create one at https://www.omdbapi.com/apikey.aspx and run with --dart-define=OMDB_API_KEY=your_key',
       );
     }
   }
@@ -20,39 +21,57 @@ class MovieRemoteDataSource {
   Future<PaginatedResponse<MovieModel>> fetchTrendingMovies({
     required int page,
   }) async {
-    _ensureTmdbKey();
+    _ensureOmdbKey();
 
     final response = await _dio.get<dynamic>(
-      '/trending/movie/day',
+      '/',
       queryParameters: <String, dynamic>{
-        'language': 'en-US',
+        'apikey': AppEnv.omdbApiKey,
+        's': AppConstants.omdbSearchQuery,
+        'type': 'movie',
         'page': page,
-        'api_key': AppEnv.tmdbApiKey,
       },
     );
 
     final data = response.data as Map<String, dynamic>;
-    final movies = (data['results'] as List<dynamic>)
+    if (data['Response'] == 'False') {
+      throw StateError(data['Error'] as String? ?? 'Unable to load movies from OMDB');
+    }
+
+    final searchResults = data['Search'] as List<dynamic>? ?? <dynamic>[];
+    final movies = searchResults
         .map(
-          (dynamic item) => MovieModel.fromTmdbJson(item as Map<String, dynamic>),
+          (dynamic item) => MovieModel.fromOmdbSearchJson(item as Map<String, dynamic>),
         )
         .toList();
 
+    final totalResults = int.tryParse(data['totalResults'] as String? ?? '') ?? movies.length;
+    final totalPages = (totalResults / 10).ceil().clamp(1, 1000);
+
     return PaginatedResponse<MovieModel>(
       items: movies,
-      page: data['page'] as int? ?? page,
-      totalPages: data['total_pages'] as int? ?? page,
+      page: page,
+      totalPages: totalPages,
     );
   }
 
-  Future<MovieModel> fetchMovieDetail(int movieId) async {
-    _ensureTmdbKey();
+  Future<MovieModel> fetchMovieDetail(String movieId) async {
+    _ensureOmdbKey();
 
     final response = await _dio.get<dynamic>(
-      '/movie/$movieId',
-      queryParameters: <String, dynamic>{'api_key': AppEnv.tmdbApiKey},
+      '/',
+      queryParameters: <String, dynamic>{
+        'apikey': AppEnv.omdbApiKey,
+        'i': movieId,
+        'plot': 'full',
+      },
     );
 
-    return MovieModel.fromTmdbJson(response.data as Map<String, dynamic>);
+    final data = response.data as Map<String, dynamic>;
+    if (data['Response'] == 'False') {
+      throw StateError(data['Error'] as String? ?? 'Unable to load movie details from OMDB');
+    }
+
+    return MovieModel.fromOmdbDetailJson(data);
   }
 }

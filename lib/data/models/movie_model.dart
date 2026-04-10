@@ -9,13 +9,30 @@ class MovieModel extends Movie {
     required super.releaseDate,
   });
 
-  factory MovieModel.fromTmdbJson(Map<String, dynamic> json) {
+  factory MovieModel.fromOmdbSearchJson(Map<String, dynamic> json) {
     return MovieModel(
-      id: json['id'] as int,
-      title: json['title'] as String? ?? 'Untitled',
-      posterPath: json['poster_path'] as String?,
-      overview: json['overview'] as String? ?? '',
-      releaseDate: json['release_date'] as String?,
+      id: json['imdbID'] as String? ?? '',
+      title: json['Title'] as String? ?? 'Untitled',
+      posterPath: _normalizePoster(json['Poster'] as String?),
+      overview: '',
+      releaseDate: json['Year'] as String?,
     );
+  }
+
+  factory MovieModel.fromOmdbDetailJson(Map<String, dynamic> json) {
+    return MovieModel(
+      id: json['imdbID'] as String? ?? '',
+      title: json['Title'] as String? ?? 'Untitled',
+      posterPath: _normalizePoster(json['Poster'] as String?),
+      overview: json['Plot'] as String? ?? '',
+      releaseDate: json['Released'] as String? ?? json['Year'] as String?,
+    );
+  }
+
+  static String? _normalizePoster(String? poster) {
+    if (poster == null || poster.isEmpty || poster == 'N/A') {
+      return null;
+    }
+    return poster;
   }
 }

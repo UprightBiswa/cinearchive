@@ -15,7 +15,7 @@ class MovieBookmark extends Equatable {
   final String id;
   final String userLocalId;
   final String? userRemoteId;
-  final int movieId;
+  final String movieId;
   final String title;
   final String? posterPath;
   final String? releaseDate;

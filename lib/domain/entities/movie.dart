@@ -9,7 +9,7 @@ class Movie extends Equatable {
     required this.releaseDate,
   });
 
-  final int id;
+  final String id;
   final String title;
   final String? posterPath;
   final String overview;
