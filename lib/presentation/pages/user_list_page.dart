@@ -2,6 +2,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/di/injection_container.dart';
+import '../../core/network/retry_signal_service.dart';
+import '../blocs/sync_status/sync_status_cubit.dart';
+import '../blocs/sync_status/sync_status_state.dart';
 import '../blocs/user_list/user_list_cubit.dart';
 import '../blocs/user_list/user_list_state.dart';
 import '../widgets/user_tile.dart';
@@ -47,10 +51,42 @@ class _UserListPageState extends State<UserListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.of(context).size.width >= 768;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('CineArchive'),
+        leading: IconButton(
+          onPressed: () {},
+          icon: const Icon(Icons.menu_rounded),
+          color: const Color(0xFF02569B),
+        ),
         actions: <Widget>[
+          if (isWide) ...<Widget>[
+            TextButton(
+              onPressed: () {},
+              child: const Text(
+                'Users',
+                style: TextStyle(
+                  color: Color(0xFF02569B),
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: null,
+              child: const Text(
+                'Movies',
+                style: TextStyle(
+                  color: Color(0xFF727782),
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: CircleAvatar(
@@ -108,60 +144,118 @@ class _UserListPageState extends State<UserListPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xCC006B5C),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Icon(Icons.sync, color: Colors.white, size: 16),
-                                SizedBox(width: 8),
-                                Text(
-                                  'RECONNECTING...',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.2,
+                        ValueListenableBuilder<bool>(
+                          valueListenable: sl<RetrySignalService>().isRetrying,
+                          builder: (context, isRetrying, _) {
+                            return BlocBuilder<SyncStatusCubit, SyncStatusState>(
+                              builder: (context, syncState) {
+                                final showSyncPill =
+                                    isRetrying || syncState.isSyncing || !syncState.isOnline;
+
+                                if (!showSyncPill) {
+                                  return const SizedBox(height: 12);
+                                }
+
+                                return Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 18,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: syncState.isOnline
+                                          ? const Color(0xCC006B5C)
+                                          : const Color(0xCC2E3132),
+                                      borderRadius: BorderRadius.circular(999),
+                                      boxShadow: const <BoxShadow>[
+                                        BoxShadow(
+                                          color: Color(0x14000000),
+                                          blurRadius: 20,
+                                          offset: Offset(0, 8),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        Icon(
+                                          syncState.isOnline ? Icons.sync : Icons.cloud_off,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          syncState.isOnline
+                                              ? 'RECONNECTING...'
+                                              : 'OFFLINE MODE',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 1.2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
+                                );
+                              },
+                            );
+                          },
                         ),
                         const SizedBox(height: 28),
-                        const Text(
-                          'Directory',
-                          style: TextStyle(
-                            color: Color(0xFF006B5C),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 2.4,
-                          ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: <Widget>[
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text(
+                                    'Directory',
+                                    style: TextStyle(
+                                      color: Color(0xFF006B5C),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 2.4,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'CineArchive Users',
+                                    style: TextStyle(
+                                      color: Color(0xFF003F74),
+                                      fontSize: 38,
+                                      fontWeight: FontWeight.w900,
+                                      height: 0.95,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isWide)
+                              Container(
+                                width: 96,
+                                height: 5,
+                                margin: const EdgeInsets.only(bottom: 8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF02569B),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'CineArchive Users',
-                          style: TextStyle(
-                            color: Color(0xFF003F74),
-                            fontSize: 38,
-                            fontWeight: FontWeight.w900,
-                            height: 0.95,
+                        if (!isWide) ...<Widget>[
+                          const SizedBox(height: 14),
+                          Container(
+                            width: 92,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF02569B),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 14),
-                        Container(
-                          width: 92,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF02569B),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                        ),
+                        ],
                         const SizedBox(height: 24),
                       ],
                     ),
@@ -196,12 +290,94 @@ class _UserListPageState extends State<UserListPage> {
                       child: Center(child: CircularProgressIndicator()),
                     ),
                   ),
-                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: isWide ? 100 : 132),
+                ),
               ],
             ),
           );
         },
       ),
+      bottomNavigationBar: isWide
+          ? null
+          : SafeArea(
+              top: false,
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: const <BoxShadow>[
+                    BoxShadow(
+                      color: Color(0x12000000),
+                      blurRadius: 24,
+                      offset: Offset(0, -4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0x1402569B),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Icon(Icons.group_rounded, color: Color(0xFF02569B)),
+                            SizedBox(height: 4),
+                            Text(
+                              'Users',
+                              style: TextStyle(
+                                color: Color(0xFF02569B),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.9,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Select a user first to open movies.'),
+                            ),
+                          );
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 10),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Icon(Icons.movie_outlined, color: Color(0xFF727782)),
+                              SizedBox(height: 4),
+                              Text(
+                                'Movies',
+                                style: TextStyle(
+                                  color: Color(0xFF727782),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.9,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 }
