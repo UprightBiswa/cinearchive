@@ -2,10 +2,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/di/injection_container.dart';
-import '../../core/network/retry_signal_service.dart';
-import '../blocs/sync_status/sync_status_cubit.dart';
-import '../blocs/sync_status/sync_status_state.dart';
 import '../blocs/user_list/user_list_cubit.dart';
 import '../blocs/user_list/user_list_state.dart';
 import '../widgets/user_tile.dart';
@@ -126,9 +122,51 @@ class _UserListPageState extends State<UserListPage> {
 
           if (state.errorMessage != null && state.users.isEmpty) {
             return Center(
-              child: FilledButton(
-                onPressed: () => context.read<UserListCubit>().fetchInitial(),
-                child: const Text('Retry loading users'),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          const Icon(
+                            Icons.cloud_off_rounded,
+                            size: 42,
+                            color: Color(0xFF02569B),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Unable to load users',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF003F74),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            state.errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFF727782),
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          FilledButton.icon(
+                            onPressed: () => context.read<UserListCubit>().fetchInitial(),
+                            icon: const Icon(Icons.refresh_rounded),
+                            label: const Text('Retry loading users'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
             );
           }
@@ -144,66 +182,7 @@ class _UserListPageState extends State<UserListPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        ValueListenableBuilder<bool>(
-                          valueListenable: sl<RetrySignalService>().isRetrying,
-                          builder: (context, isRetrying, _) {
-                            return BlocBuilder<SyncStatusCubit, SyncStatusState>(
-                              builder: (context, syncState) {
-                                final showSyncPill =
-                                    isRetrying || syncState.isSyncing || !syncState.isOnline;
-
-                                if (!showSyncPill) {
-                                  return const SizedBox(height: 12);
-                                }
-
-                                return Center(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 18,
-                                      vertical: 10,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: syncState.isOnline
-                                          ? const Color(0xCC006B5C)
-                                          : const Color(0xCC2E3132),
-                                      borderRadius: BorderRadius.circular(999),
-                                      boxShadow: const <BoxShadow>[
-                                        BoxShadow(
-                                          color: Color(0x14000000),
-                                          blurRadius: 20,
-                                          offset: Offset(0, 8),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: <Widget>[
-                                        Icon(
-                                          syncState.isOnline ? Icons.sync : Icons.cloud_off,
-                                          color: Colors.white,
-                                          size: 16,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          syncState.isOnline
-                                              ? 'RECONNECTING...'
-                                              : 'OFFLINE MODE',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w800,
-                                            letterSpacing: 1.2,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 12),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: <Widget>[

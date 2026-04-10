@@ -17,24 +17,62 @@ class ReconnectingBanner extends StatelessWidget {
         return BlocBuilder<SyncStatusCubit, SyncStatusState>(
           builder: (context, state) {
             final isVisible = isRetrying || state.isSyncing || !state.isOnline;
-            if (!isVisible) return const SizedBox.shrink();
+            final message =
+                state.isOnline ? 'Reconnecting...' : 'Offline mode enabled';
 
-            return Align(
-              alignment: Alignment.topCenter,
-              child: SafeArea(
-                child: Container(
-                  margin: const EdgeInsets.all(12),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    state.isOnline ? 'Reconnecting...' : 'Offline mode enabled',
-                    style: const TextStyle(color: Colors.white),
+            return IgnorePointer(
+              ignoring: true,
+              child: AnimatedSlide(
+                duration: const Duration(milliseconds: 220),
+                offset: isVisible ? Offset.zero : const Offset(0, -1),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 180),
+                  opacity: isVisible ? 1 : 0,
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: SafeArea(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Container(
+                          margin: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: state.isOnline
+                                ? const Color(0xE6006B5C)
+                                : const Color(0xE62E3132),
+                            borderRadius: BorderRadius.circular(999),
+                            boxShadow: const <BoxShadow>[
+                              BoxShadow(
+                                color: Color(0x1A000000),
+                                blurRadius: 18,
+                                offset: Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Icon(
+                                state.isOnline ? Icons.sync : Icons.cloud_off,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                message,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),

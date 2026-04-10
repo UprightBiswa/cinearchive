@@ -101,9 +101,51 @@ class _MovieListPageState extends State<MovieListPage> {
 
     if (state.errorMessage != null && state.movies.isEmpty) {
       return Center(
-        child: FilledButton(
-          onPressed: () => context.read<MovieListCubit>().fetchInitial(),
-          child: const Text('Retry loading movies'),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    const Icon(
+                      Icons.movie_filter_outlined,
+                      size: 42,
+                      color: Color(0xFF02569B),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Unable to load movies',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF003F74),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      state.errorMessage!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFF727782),
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton.icon(
+                      onPressed: () => context.read<MovieListCubit>().fetchInitial(),
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Retry loading movies'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       );
     }
@@ -215,9 +257,42 @@ class _MovieListPageState extends State<MovieListPage> {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text(
-            'No saved movies yet for ${widget.user.fullName}. Bookmark from the Trending tab and they will appear here.',
-            textAlign: TextAlign.center,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    const Icon(
+                      Icons.bookmark_outline_rounded,
+                      size: 42,
+                      color: Color(0xFF02569B),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No saved movies yet for ${widget.user.fullName}.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF003F74),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Bookmark titles from the Trending tab and they will appear here, even when the app is offline.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF727782),
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       );
