@@ -15,6 +15,18 @@ class ResilientInterceptor extends Interceptor {
   static const String _retryCountKey = 'retry_count';
   static const String _skipRandomFailureKey = 'skip_random_failure';
 
+  bool _shouldRetry(DioException error) {
+    final statusCode = error.response?.statusCode;
+    if (statusCode != null) {
+      return statusCode >= 500;
+    }
+
+    return error.type == DioExceptionType.connectionError ||
+        error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.receiveTimeout ||
+        error.type == DioExceptionType.sendTimeout;
+  }
+
   @override
   void onRequest(
     RequestOptions options,
@@ -49,7 +61,7 @@ class ResilientInterceptor extends Interceptor {
     final isGet = options.method.toUpperCase() == 'GET';
     final retryCount = options.extra[_retryCountKey] as int? ?? 0;
 
-    if (!isGet || retryCount >= 3) {
+    if (!isGet || retryCount >= 3 || !_shouldRetry(err)) {
       handler.next(err);
       return;
     }

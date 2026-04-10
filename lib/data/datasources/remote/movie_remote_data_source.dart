@@ -23,8 +23,7 @@ class MovieRemoteDataSource {
   }) async {
     _ensureOmdbKey();
 
-    final response = await _dio.get<dynamic>(
-      '/',
+    final response = await _safeGet(
       queryParameters: <String, dynamic>{
         'apikey': AppEnv.omdbApiKey,
         's': AppConstants.omdbSearchQuery,
@@ -58,8 +57,7 @@ class MovieRemoteDataSource {
   Future<MovieModel> fetchMovieDetail(String movieId) async {
     _ensureOmdbKey();
 
-    final response = await _dio.get<dynamic>(
-      '/',
+    final response = await _safeGet(
       queryParameters: <String, dynamic>{
         'apikey': AppEnv.omdbApiKey,
         'i': movieId,
@@ -73,5 +71,23 @@ class MovieRemoteDataSource {
     }
 
     return MovieModel.fromOmdbDetailJson(data);
+  }
+
+  Future<Response<dynamic>> _safeGet({
+    required Map<String, dynamic> queryParameters,
+  }) async {
+    try {
+      return await _dio.get<dynamic>(
+        '/',
+        queryParameters: queryParameters,
+      );
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 401) {
+        throw StateError(
+          'OMDB returned 401 Unauthorized. Your key may not be activated yet. Open the activation link from the OMDB email, then try again.',
+        );
+      }
+      rethrow;
+    }
   }
 }
